@@ -1,0 +1,43 @@
+app-id: com.rustdesk.rustdesk
+runtime: org.freedesktop.Platform
+runtime-version: '21.08'
+sdk: org.freedesktop.Sdk
+rename-desktop-icon: rustdesk.desktop
+command: rustdesk
+
+finish-args:
+  - --device=dri
+  - --filesystem=host
+  - --share=ipc
+  - --share=network
+  - --socket=pulseaudio
+  - --socket=x11
+
+modules:
+  - name: unappimage
+    buildsystem: simple
+    build-commands:
+      - make -C squashfs-tools install INSTALL_DIR=/app/bin
+    sources:
+      - type: git
+        url: https://github.com/refi64/unappimage
+        commit: d7f86f2a0d7ec3a69211125207d5f127386b849a
+
+  - name: rustdesk
+    buildsystem: simple
+    build-commands:
+      - unappimage *.AppImage
+      - mv squashfs-root/* .
+      - rm -rf squashfs-root *.AppImage
+      - rm AppRun
+      - cp -r etc /app
+      - cp -r usr/* /app
+      - cp -r lib/* /app/lib
+      - rm -rf /app/bin/rustdesk
+      - install -D -m 755 usr/bin/rustdesk /app/bin/rustdesk
+      - install -D -m 644 rustdesk.desktop /app/share/applications/rustdesk.desktop
+      - install -D -m 644 rustdesk.png /app/share/icons/rustdesk.png
+    sources:
+      - type: file
+        url: https://github.com/rustdesk/rustdesk/releases/download/1.1.9/RustDesk-1.1.10-x86_64_1804.AppImage
+        sha256: 26444fab44fa14cc2cfb24dbbdde3284451e0cc43e44d6e0a8d8f3337daa6350
